@@ -9,6 +9,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import javax.validation.constraints.PositiveOrZero;
 import java.util.Collection;
 
@@ -52,5 +54,24 @@ public class AccountController {
                     HttpStatus.NOT_FOUND,
                     "Account not found id: " + id
                 ));
+    }
+
+    @DeleteMapping(path = "/accounts/{id}", headers = "X-API-VERSION=1")
+    public ResponseEntity<?> deleteAccount(@PathVariable @PositiveOrZero(message = "No negative id!") long id) {
+        try {
+            accounts.deleteById(id);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Account not found id: " + id,
+                    e
+            );
+        }
+    }
+
+    @PostMapping(path = "/accounts", headers = "X-API-VERSION=1")
+    public void createAccount(@RequestBody @Valid Account account) {
+        accounts.save(account);
     }
 }
